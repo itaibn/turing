@@ -1,0 +1,7 @@
+[package]
+name = "turing"
+version = "0.1.0"
+authors = ["Itai Bar-Natan <itaibn3141@gmail.com>"]
+
+[dependencies]
+rand = "0.3.15"
