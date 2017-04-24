@@ -4,16 +4,17 @@ extern crate rand;
 
 mod turing;
 
+use gtk::prelude::*;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use gtk::prelude::*;
+use turing::{Tape, TuringMachineComputation, Symbol};
 
 fn main() {
     let mut rng = rand::StdRng::new().unwrap();
     let turing_machine = turing::random_turing_machine(&mut rng, 10);
-    let mut computation =
-        turing::TuringMachineComputation::start(&turing_machine);
+    let mut computation = TuringMachineComputation::start(&turing_machine);
     computation.step();
 
     if gtk::init().is_err() {
@@ -26,7 +27,7 @@ fn main() {
     window.set_title("Turing Machine");
     window.set_border_width(10);
     window.set_position(gtk::WindowPosition::Center);
-    window.set_default_size(450, 100);
+    window.set_default_size(650, 100);
 
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
@@ -35,10 +36,10 @@ fn main() {
 
     //let tape_len = 21;
     let tm_view = gtk::DrawingArea::new();
-    tm_view.set_size_request(200, 80);
+    tm_view.set_size_request(600, 80);
 
     let tape = computation.tape();
-    tm_view.connect_draw(move |_, ctx| draw_tape(ctx, &tape));
+    tm_view.connect_draw(move |_, ctx| draw_tape(ctx, &tape.borrow()));
 
     window.add(&tm_view);
 
@@ -46,6 +47,22 @@ fn main() {
     gtk::main();
 }
 
-fn draw_tape(ctx: &cairo::Context, tape: &Rc<RefCell<turing::Tape>>) -> Inhibit {
+fn draw_tape(cr: &cairo::Context, tape: &Tape) -> Inhibit {
+    const CELL_HEIGHT: f64 = 30.0;
+    const CELL_WIDTH: f64 = 30.0;
+
+    for n in -10..10 {
+        match tape.read_at(n) {
+            Symbol::Zero => {
+                cr.set_source_rgb(1.0, 1.0, 1.0);
+            },
+            Symbol::One => {
+                cr.set_source_rgb(0.0, 0.0, 0.0);
+            }
+        }
+        cr.rectangle(((n+10) as f64)*CELL_WIDTH, 0.0, CELL_WIDTH, CELL_HEIGHT);
+        cr.fill();
+    }
+
     Inhibit(false)
 }
