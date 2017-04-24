@@ -13,9 +13,10 @@ use turing::{Tape, TuringMachineComputation, Symbol};
 
 fn main() {
     let mut rng = rand::StdRng::new().unwrap();
-    let turing_machine = turing::random_turing_machine(&mut rng, 10);
-    let mut computation = TuringMachineComputation::start(&turing_machine);
-    computation.step();
+    let turing_machine = Rc::new(turing::random_turing_machine(&mut rng, 10));
+    let computation = Rc::new(RefCell::new(
+        TuringMachineComputation::start(turing_machine)));
+    computation.borrow_mut().step();
 
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
@@ -38,8 +39,8 @@ fn main() {
     let tm_view = gtk::DrawingArea::new();
     tm_view.set_size_request(600, 80);
 
-    let tape = computation.tape();
-    tm_view.connect_draw(move |_, ctx| draw_tape(ctx, &tape.borrow()));
+    let computation_clone = computation.clone();
+    tm_view.connect_draw(move |_, ctx| draw_tape(ctx, &*computation.borrow()));
 
     window.add(&tm_view);
 
@@ -47,10 +48,13 @@ fn main() {
     gtk::main();
 }
 
-fn draw_tape(cr: &cairo::Context, tape: &Tape) -> Inhibit {
+fn draw_tape(cr: &cairo::Context, computation: &TuringMachineComputation) ->
+    Inhibit {
+
     const CELL_HEIGHT: f64 = 30.0;
     const CELL_WIDTH: f64 = 30.0;
 
+    let tape = computation.tape();
     for n in -10..10 {
         match tape.read_at(n) {
             Symbol::Zero => {

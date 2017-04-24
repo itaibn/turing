@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use rand::{Rng, Rand};
@@ -41,13 +40,12 @@ pub struct TuringMachine {
 }
 
 #[derive(Debug)]
-pub struct TuringMachineComputation<'a> {
+pub struct TuringMachineComputation {
     is_halted: bool,
-    // We want to share the tape with the GUI
-    tape: Rc<RefCell<Tape>>,
+    tape: Tape,
     tape_head: i32,
     cur_state: StateID,
-    turing_machine: &'a TuringMachine,
+    turing_machine: Rc<TuringMachine>,
 }
 
 impl Direction {
@@ -96,11 +94,11 @@ impl TuringMachine {
     }
 }
 
-impl<'a> TuringMachineComputation<'a> {
-    pub fn start(turing_machine: &'a TuringMachine) -> Self {
+impl TuringMachineComputation {
+    pub fn start(turing_machine: Rc<TuringMachine>) -> Self {
         TuringMachineComputation {
             is_halted: false,
-            tape: Rc::new(RefCell::new(Tape::default())),
+            tape: Tape::default(),
             tape_head: 0,
             cur_state: turing_machine.initial_state,
             turing_machine: turing_machine,
@@ -111,16 +109,16 @@ impl<'a> TuringMachineComputation<'a> {
         self.is_halted
     }
 
-    pub fn tape(&self) -> Rc<RefCell<Tape>> {
-        self.tape.clone()
+    pub fn tape(&self) -> &Tape {
+        &self.tape
     }
 
     fn read_head(&self) -> Symbol {
-        self.tape.borrow().read_at(self.tape_head)
+        self.tape.read_at(self.tape_head)
     }
 
     fn write_head(&mut self, new_symb: Symbol) {
-        self.tape.borrow_mut().write_at(self.tape_head, new_symb);
+        self.tape.write_at(self.tape_head, new_symb);
     }
 
     fn move_dir(&mut self, dir: Direction) {
