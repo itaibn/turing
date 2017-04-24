@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use rand::{Rng, Rand};
 
 pub const NUM_SYMBOLS: usize = 2;
@@ -40,7 +43,8 @@ pub struct TuringMachine {
 #[derive(Debug)]
 pub struct TuringMachineComputation<'a> {
     is_halted: bool,
-    tape: Tape,
+    // We want to share the tape with the GUI
+    tape: Rc<RefCell<Tape>>,
     tape_head: i32,
     cur_state: StateID,
     turing_machine: &'a TuringMachine,
@@ -96,7 +100,7 @@ impl<'a> TuringMachineComputation<'a> {
     pub fn start(turing_machine: &'a TuringMachine) -> Self {
         TuringMachineComputation {
             is_halted: false,
-            tape: Tape::default(),
+            tape: Rc::new(RefCell::new(Tape::default())),
             tape_head: 0,
             cur_state: turing_machine.initial_state,
             turing_machine: turing_machine,
@@ -107,12 +111,16 @@ impl<'a> TuringMachineComputation<'a> {
         self.is_halted
     }
 
+    pub fn tape(&self) -> Rc<RefCell<Tape>> {
+        self.tape.clone()
+    }
+
     fn read_head(&self) -> Symbol {
-        self.tape.read_at(self.tape_head)
+        self.tape.borrow().read_at(self.tape_head)
     }
 
     fn write_head(&mut self, new_symb: Symbol) {
-        self.tape.write_at(self.tape_head, new_symb);
+        self.tape.borrow_mut().write_at(self.tape_head, new_symb);
     }
 
     fn move_dir(&mut self, dir: Direction) {

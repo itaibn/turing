@@ -1,7 +1,11 @@
+extern crate cairo;
 extern crate gtk;
 extern crate rand;
 
 mod turing;
+
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use gtk::prelude::*;
 
@@ -29,18 +33,19 @@ fn main() {
         Inhibit(false)
     });
 
-    let tape_len = 21;
+    //let tape_len = 21;
     let tm_view = gtk::DrawingArea::new();
     tm_view.set_size_request(200, 80);
 
-    tm_view.connect_draw(|_, ctx| {
-        ctx.rectangle(0., 0., 10., 10.);
-        ctx.fill();
-        Inhibit(false)
-    });
+    let tape = computation.tape();
+    tm_view.connect_draw(move |_, ctx| draw_tape(ctx, &tape));
 
     window.add(&tm_view);
 
     window.show_all();
     gtk::main();
+}
+
+fn draw_tape(ctx: &cairo::Context, tape: &Rc<RefCell<turing::Tape>>) -> Inhibit {
+    Inhibit(false)
 }
