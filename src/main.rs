@@ -16,7 +16,7 @@ fn main() {
     let turing_machine = Rc::new(turing::random_turing_machine(&mut rng, 10));
     let computation = Rc::new(RefCell::new(
         TuringMachineComputation::start(turing_machine)));
-    computation.borrow_mut().step();
+    //computation.borrow_mut().step();
 
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
@@ -40,9 +40,19 @@ fn main() {
     tm_view.set_size_request(600, 80);
 
     let computation_clone = computation.clone();
-    tm_view.connect_draw(move |_, ctx| draw_tape(ctx, &*computation.borrow()));
+    tm_view.connect_draw(move |_, ctx| draw_tape(ctx,
+        &*computation_clone.borrow()));
 
     window.add(&tm_view);
+
+    let computation_clone = computation.clone();
+    let tm_view_clone = tm_view.clone();
+    gtk::timeout_add(1000, move || {
+        //println!("step:\n\n{:?}", &computation_clone);
+        let halted = computation_clone.borrow_mut().step();
+        tm_view_clone.queue_draw();
+        Continue(!halted)
+    });
 
     window.show_all();
     gtk::main();
