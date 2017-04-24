@@ -13,7 +13,7 @@ use turing::{Tape, TuringMachineComputation, Symbol};
 
 fn main() {
     let mut rng = rand::StdRng::new().unwrap();
-    let turing_machine = Rc::new(turing::random_turing_machine(&mut rng, 10));
+    let turing_machine = Rc::new(turing::random_turing_machine(&mut rng, 30));
     let computation = Rc::new(RefCell::new(
         TuringMachineComputation::start(turing_machine)));
     //computation.borrow_mut().step();
@@ -51,6 +51,7 @@ fn main() {
         //println!("step:\n\n{:?}", &computation_clone);
         let halted = computation_clone.borrow_mut().step();
         tm_view_clone.queue_draw();
+        if halted {println!("Halted")}
         Continue(!halted)
     });
 
