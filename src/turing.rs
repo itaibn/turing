@@ -1,3 +1,4 @@
+use std::fmt;
 use std::rc::Rc;
 
 use rand::{Rng, Rand};
@@ -113,6 +114,14 @@ impl TuringMachineComputation {
         &self.tape
     }
 
+    pub fn tape_head_position(&self) -> i32 {
+        self.tape_head
+    }
+
+    pub fn current_state(&self) -> StateID {
+        self.cur_state
+    }
+
     fn read_head(&self) -> Symbol {
         self.tape.read_at(self.tape_head)
     }
@@ -193,5 +202,11 @@ pub fn random_turing_machine<R: Rng>(rng: &mut R, num_states: u32) ->
     TuringMachine {
         initial_state: StateID(0),
         transition_rules: transition_rules,
+    }
+}
+
+impl fmt::Display for StateID {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "S{}", self.0)
     }
 }
