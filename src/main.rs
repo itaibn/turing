@@ -16,46 +16,36 @@ fn main() {
     let turing_machine = Rc::new(turing::random_turing_machine(&mut rng, 30));
     let computation = Rc::new(RefCell::new(
         TuringMachineComputation::start(turing_machine)));
-    //computation.borrow_mut().step();
 
     if gtk::init().is_err() {
         println!("Failed to initialize GTK.");
         return;
     }
 
-    let window = gtk::Window::new(gtk::WindowType::Toplevel);
+    let glade_src = include_str!("template.glade");
+    let builder = gtk::Builder::new_from_string(glade_src);
 
-    window.set_title("Turing Machine");
-    window.set_border_width(10);
-    window.set_position(gtk::WindowPosition::Center);
-    window.set_default_size(650, 100);
-
+    let window: gtk::Window = builder.get_object("top-window").unwrap();
+    window.show_all();
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
         Inhibit(false)
     });
 
-    //let tape_len = 21;
-    let tm_view = gtk::DrawingArea::new();
-    tm_view.set_size_request(600, 80);
-
+    let tm_view: gtk::DrawingArea = builder.get_object("tm-view").unwrap();
     let computation_clone = computation.clone();
     tm_view.connect_draw(move |_, ctx| draw_tape(ctx,
         &*computation_clone.borrow()));
 
-    window.add(&tm_view);
-
     let computation_clone = computation.clone();
     let tm_view_clone = tm_view.clone();
     gtk::timeout_add(1000, move || {
-        //println!("step:\n\n{:?}", &computation_clone);
         let halted = computation_clone.borrow_mut().step();
         tm_view_clone.queue_draw();
         if halted {println!("Halted")}
         Continue(!halted)
     });
 
-    window.show_all();
     gtk::main();
 }
 
@@ -78,6 +68,12 @@ fn draw_tape(cr: &cairo::Context, computation: &TuringMachineComputation) ->
         cr.rectangle(((n+10) as f64)*CELL_WIDTH, 0.0, CELL_WIDTH, CELL_HEIGHT);
         cr.fill();
     }
+
+    cr.set_source_rgb(1.0, 0.0, 0.0);
+    cr.move_to((computation.tape_head_position() + 10) as f64 * CELL_WIDTH,
+        CELL_HEIGHT/2.0);
+    //cr.move_to(15.0, 10.0);
+    cr.show_text(&computation.current_state().to_string());
 
     Inhibit(false)
 }
