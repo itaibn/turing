@@ -56,7 +56,7 @@ fn draw_tape(cr: &cairo::Context, computation: &TuringMachineComputation) ->
     const CELL_WIDTH: f64 = 30.0;
 
     let tape = computation.tape();
-    for n in -10..10 {
+    for n in -10..11 {
         match tape.read_at(n) {
             Symbol::Zero => {
                 cr.set_source_rgb(1.0, 1.0, 1.0);
