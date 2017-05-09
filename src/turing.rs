@@ -1,20 +1,22 @@
+use std::collections::VecDeque;
 use std::fmt;
+use std::iter;
 use std::rc::Rc;
 
 use rand::{Rng, Rand};
 
-pub const NUM_SYMBOLS: usize = 2;
-
 #[derive(Clone, Copy, Debug)]
 pub enum Symbol {Zero, One}
 
-// Private & will be improved
-const TAPE_MIN: i32 = -10;
-const TAPE_MAX: i32 = 10;
-const TAPE_LEN: usize = (TAPE_MAX - TAPE_MIN + 1) as usize;
+pub const NUM_SYMBOLS: usize = 2;
+const SYMBOLS: [Symbol; NUM_SYMBOLS] =
+    [Symbol::Zero, Symbol::One];
 
 #[derive(Debug)]
-pub struct Tape([Symbol; TAPE_LEN]);
+pub struct Tape {
+    data: VecDeque<u32>,
+    start_point: isize,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum Direction {Left, Right}
@@ -58,26 +60,64 @@ impl Direction {
     }
 }
 
-impl Tape {
-    fn check_index(index: i32) {
-        assert!(index >= TAPE_MIN && index <= TAPE_MAX,
-            "Tape head out of bounds: {}", index);
+impl Symbol {
+    fn from_int(n: u32) -> Symbol {
+        SYMBOLS[n as usize]
     }
 
+    fn to_int(self) -> u32 {
+        match self {
+            Symbol::Zero => 0,
+            Symbol::One => 1,
+        }
+    }
+}
+
+impl Tape {
     pub fn read_at(&self, index: i32) -> Symbol {
-        Tape::check_index(index);
-        self.0[(index - TAPE_MIN) as usize]
+        let offset = index & 31;
+        let array_index = (index >> 5) as isize + self.start_point;
+        assert!(0 <= offset && offset < 32, "offset {}", offset);
+        if array_index < 0 {
+            Symbol::Zero
+        } else {
+            self.data.get(array_index as usize)
+                     .map_or(Symbol::Zero,
+                             |n| Symbol::from_int((n >> offset) & 1))
+        }
     }
 
     pub fn write_at(&mut self, index: i32, new_val: Symbol) {
-        Tape::check_index(index);
-        self.0[(index - TAPE_MIN) as usize] = new_val;
+        let offset = index & 31;
+        let mut array_index = (index >> 5) as isize + self.start_point;
+
+        if array_index < 0 {
+            // std Deque doesn't have convenient way of extending at the front
+            for _ in 0..-array_index {
+                self.data.push_front(0);
+                self.start_point += 1;
+                array_index += 1;
+            }
+        }
+
+        if array_index >= self.data.len() as isize {
+            let extend_len = array_index as usize + 1 - self.data.len();
+            self.data.extend(iter::repeat(0).take(extend_len));
+        }
+
+        let mask = 1 << offset;
+        let prev_bits = self.data[array_index as usize];
+        let new_bits = (prev_bits & !mask) | (new_val.to_int() << offset);
+        self.data[array_index as usize] = new_bits;
     }
 }
 
 impl Default for Tape {
     fn default() -> Self {
-        Tape([Symbol::Zero; TAPE_LEN])
+        Tape {
+            data: VecDeque::new(),
+            start_point: 0,
+        }
     }
 }
 
