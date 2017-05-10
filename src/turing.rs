@@ -122,10 +122,12 @@ impl Default for Tape {
 }
 
 impl TuringMachine {
+    #[allow(dead_code)]
     pub fn initial_state(&self) -> StateID {
         self.initial_state
     }
 
+    #[allow(dead_code)]
     pub fn num_states(&self) -> usize {
         self.transition_rules.len()
     }

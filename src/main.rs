@@ -9,7 +9,7 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use turing::{Tape, TuringMachineComputation, Symbol};
+use turing::{TuringMachineComputation, Symbol};
 
 const VISIBLE_CELLS: i32 = 21;
 
@@ -27,9 +27,6 @@ impl GuiState {
         if self.run.tape_head_position() >= self.view_start + VISIBLE_CELLS {
             self.view_start += 5;
         }
-        //DEBUG
-        //println!("Debug:\n tape head position: {}\n View start point: {}",
-        //    self.run.tape_head_position(), self.view_start);
         false
     }
 }
