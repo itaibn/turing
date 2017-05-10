@@ -1,9 +1,11 @@
 extern crate cairo;
+extern crate clap;
 extern crate gtk;
 extern crate rand;
 
 mod turing;
 
+use clap::{App, Arg};
 use gtk::prelude::*;
 
 use std::cell::RefCell;
@@ -32,8 +34,21 @@ impl GuiState {
 }
 
 fn main() {
+    let matches = App::new("Turing Machine")
+                          .version("0.1")
+                          .about("Turing machine simulator")
+                          .arg(Arg::with_name("NUM_STATES")
+                               .help("Number of states for the Turing machine")
+                               .index(1))
+                          .get_matches();
+
     let mut rng = rand::StdRng::new().unwrap();
-    let turing_machine = Rc::new(turing::random_turing_machine(&mut rng, 30));
+    let num_states = matches.value_of("NUM_STATES")
+                            .and_then(|s| s.parse().ok())
+                            .unwrap_or(30);
+
+    let turing_machine = Rc::new(turing::random_turing_machine(&mut rng,
+        num_states));
     let gui_state_owned = GuiState {
         run: TuringMachineComputation::start(turing_machine),
         view_start: -10,
