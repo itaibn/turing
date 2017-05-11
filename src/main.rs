@@ -13,6 +13,24 @@ use std::rc::Rc;
 
 use turing::{TuringMachineComputation, Symbol};
 
+// Copied from http://gtk-rs.org/tuto/closures
+macro_rules! clone {
+    (@param _) => ( _ );
+    (@param $x:ident) => ( $x );
+    ($($n:ident),+ => move || $body:expr) => (
+        {
+            $( let $n = $n.clone(); )+
+            move || $body
+        }
+    );
+    ($($n:ident),+ => move |$($p:tt),+| $body:expr) => (
+        {
+            $( let $n = $n.clone(); )+
+            move |$(clone!(@param $p),)+| $body
+        }
+    );
+}
+
 const VISIBLE_CELLS: i32 = 21;
 
 struct GuiState {
@@ -76,27 +94,25 @@ fn main() {
     let builder = gtk::Builder::new_from_string(glade_src);
 
     let window: gtk::Window = builder.get_object("top-window").unwrap();
+    let tm_view: gtk::DrawingArea = builder.get_object("tm-view").unwrap();
+
     window.show_all();
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
         Inhibit(false)
     });
 
-    let tm_view: gtk::DrawingArea = builder.get_object("tm-view").unwrap();
-    let gui_state_clone = gui_state.clone();
-    tm_view.connect_draw(move |_, ctx| {
-        draw_tape(ctx, &*gui_state_clone.borrow());
+    tm_view.connect_draw(clone!(gui_state => move |_, ctx| {
+        draw_tape(ctx, &*gui_state.borrow());
         Inhibit(false)
-    });
+    }));
 
-    let gui_state_clone = gui_state.clone();
-    let tm_view_clone = tm_view.clone();
-    gtk::timeout_add(delay, move || {
-        let halted = gui_state_clone.borrow_mut().step();
-        tm_view_clone.queue_draw();
+    gtk::timeout_add(delay, clone!(gui_state, tm_view => move || {
+        let halted = gui_state.borrow_mut().step();
+        tm_view.queue_draw();
         if halted {println!("Halted")}
         Continue(!halted)
-    });
+    }));
 
     gtk::main();
 }
