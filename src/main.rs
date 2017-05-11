@@ -39,13 +39,25 @@ fn main() {
                           .about("Turing machine simulator")
                           .arg(Arg::with_name("NUM_STATES")
                                .help("Number of states for the Turing machine")
-                               .index(1))
+                               .long("states")
+                               .takes_value(true))
+                          .arg(Arg::with_name("delay")
+                               .help(
+                                 "Delay between Turing machine steps")
+                               .long("delay")
+                               .value_name("MILLISECONDS")
+                               .takes_value(true))
                           .get_matches();
 
     let mut rng = rand::StdRng::new().unwrap();
     let num_states = matches.value_of("NUM_STATES")
-                            .and_then(|s| s.parse().ok())
+                            .map(|s| s.parse()
+                                      .expect("NUM_STATES must be an integer"))
                             .unwrap_or(30);
+    let delay = matches.value_of("delay")
+                       .map(|s| s.parse()
+                                 .expect("MILLISECONDS must be an integer"))
+                       .unwrap_or(1000);
 
     let turing_machine = Rc::new(turing::random_turing_machine(&mut rng,
         num_states));
@@ -79,7 +91,7 @@ fn main() {
 
     let gui_state_clone = gui_state.clone();
     let tm_view_clone = tm_view.clone();
-    gtk::timeout_add(1000, move || {
+    gtk::timeout_add(delay, move || {
         let halted = gui_state_clone.borrow_mut().step();
         tm_view_clone.queue_draw();
         if halted {println!("Halted")}
