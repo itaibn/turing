@@ -41,12 +41,14 @@ struct GuiState {
 impl GuiState {
     fn step(&mut self) -> bool{
         if self.run.step() {return true;}
+/*
         if self.run.tape_head_position() < self.view_start {
             self.view_start -= 5;
         }
         if self.run.tape_head_position() >= self.view_start + VISIBLE_CELLS {
             self.view_start += 5;
         }
+*/
         false
     }
 }
@@ -93,8 +95,14 @@ fn main() {
     let glade_src = include_str!("template.glade");
     let builder = gtk::Builder::new_from_string(glade_src);
 
-    let window: gtk::Window = builder.get_object("top-window").unwrap();
-    let tm_view: gtk::DrawingArea = builder.get_object("tm-view").unwrap();
+    let window: gtk::Window = builder.get_object("top-window")
+                                     .expect("top-window");
+    let tm_view: gtk::DrawingArea = builder.get_object("tm-view")
+                                           .expect("tm-view");
+    let left_button: gtk::Button = builder.get_object("left-button")
+                                          .expect("left-button");
+    let right_button: gtk::Button = builder.get_object("right-button")
+                                           .expect("right-button");
 
     window.show_all();
     window.connect_delete_event(|_, _| {
@@ -105,6 +113,16 @@ fn main() {
     tm_view.connect_draw(clone!(gui_state => move |_, ctx| {
         draw_tape(ctx, &*gui_state.borrow());
         Inhibit(false)
+    }));
+
+    left_button.connect_clicked(clone!(gui_state, tm_view => move |_| {
+        gui_state.borrow_mut().view_start -= 5;
+        tm_view.queue_draw();
+    }));
+
+    right_button.connect_clicked(clone!(gui_state, tm_view => move |_| {
+        gui_state.borrow_mut().view_start += 5;
+        tm_view.queue_draw();
     }));
 
     gtk::timeout_add(delay, clone!(gui_state, tm_view => move || {
