@@ -99,6 +99,8 @@ fn main() {
                                      .expect("top-window");
     let tm_view: gtk::DrawingArea = builder.get_object("tm-view")
                                            .expect("tm-view");
+    let tm_description: gtk::Label = builder.get_object("tm-description")
+                                            .expect("tm-description");
     let left_button: gtk::Button = builder.get_object("left-button")
                                           .expect("left-button");
     let right_button: gtk::Button = builder.get_object("right-button")
@@ -114,6 +116,8 @@ fn main() {
         draw_tape(ctx, &*gui_state.borrow());
         Inhibit(false)
     }));
+
+    tm_description.set_label(&gui_state.borrow().run.turing_machine().to_string());
 
     left_button.connect_clicked(clone!(gui_state, tm_view => move |_| {
         gui_state.borrow_mut().view_start -= 5;

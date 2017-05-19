@@ -122,12 +122,10 @@ impl Default for Tape {
 }
 
 impl TuringMachine {
-    #[allow(dead_code)]
     pub fn initial_state(&self) -> StateID {
         self.initial_state
     }
 
-    #[allow(dead_code)]
     pub fn num_states(&self) -> usize {
         self.transition_rules.len()
     }
@@ -146,6 +144,10 @@ impl TuringMachineComputation {
             cur_state: turing_machine.initial_state,
             turing_machine: turing_machine,
         }
+    }
+
+    pub fn turing_machine(&self) -> &TuringMachine {
+        &self.turing_machine
     }
 
     pub fn is_halted(&self) -> bool {
@@ -250,5 +252,46 @@ pub fn random_turing_machine<R: Rng>(rng: &mut R, num_states: u32) ->
 impl fmt::Display for StateID {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "S{}", self.0)
+    }
+}
+
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let dir_char: char = match *self {
+            Direction::Left => 'L',
+            Direction::Right => 'R',
+        };
+        write!(f, "{}", dir_char)
+    }
+}
+
+impl fmt::Display for Action {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Action::Halt => write!(f, "H"),
+            Action::Transition {
+                write: symb,
+                movement: dir,
+                next_state: state,
+            } => write!(f, "{}{}{}", symb.to_int(), dir, state),
+        }
+    }
+}
+
+impl fmt::Display for TuringMachine {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Number of states: {}\n", self.num_states())?;
+        write!(f, "Initial state: {}\n", self.initial_state())?;
+
+        for i in 0..self.num_states() {
+            let state = StateID(i as u32);
+            let action0 = self.lookup_action(state, Symbol::Zero);
+            let action1 = self.lookup_action(state, Symbol::One);
+
+            write!(f, "    {}: 0 -> {}; 1 -> {}\n", state, action0, action1)?;
+        }
+
+        // Any better way of ending it?
+        write!(f, "")
     }
 }
