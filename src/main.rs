@@ -184,13 +184,11 @@ fn show_tm_grid(grid: &gtk::Grid, tm: &TuringMachine) {
 fn insert_tm_grid_row(grid: &gtk::Grid, row: i32, state: StateID, symbol:
     Symbol, action: Action) {
 
-    use std::ops::Deref;
-
     grid.insert_row(row);
 
-    let situation_label = gtk::Label::new(format!("{}-{}", state,
-        symbol).deref());
-    let action_label = gtk::Label::new(action.to_string().deref());
+    let situation_label = gtk::Label::new(Some(&*format!("{}-{}", state,
+        symbol)));
+    let action_label = gtk::Label::new(Some(&*action.to_string()));
 
     grid.attach(&situation_label, 1, row, 1, 1);
     grid.attach(&action_label, 2, row, 1, 1);
