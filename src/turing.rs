@@ -265,6 +265,12 @@ impl fmt::Display for Direction {
     }
 }
 
+impl fmt::Display for Symbol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_int())
+    }
+}
+
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

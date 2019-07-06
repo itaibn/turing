@@ -11,7 +11,7 @@ use gtk::prelude::*;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use turing::{TuringMachineComputation, Symbol};
+use turing::{TuringMachine, TuringMachineComputation, StateID, Symbol, Action};
 
 // Copied from http://gtk-rs.org/tuto/closures
 macro_rules! clone {
@@ -101,6 +101,8 @@ fn main() {
                                            .expect("tm-view");
     let tm_description: gtk::Label = builder.get_object("tm-description")
                                             .expect("tm-description");
+    let tm_grid_description: gtk::Grid =
+        builder.get_object("tm-grid-description").expect("tm-grid-description");
     let left_button: gtk::Button = builder.get_object("left-button")
                                           .expect("left-button");
     let right_button: gtk::Button = builder.get_object("right-button")
@@ -118,6 +120,7 @@ fn main() {
     }));
 
     tm_description.set_label(&gui_state.borrow().run.turing_machine().to_string());
+    show_tm_grid(&tm_grid_description, &gui_state.borrow().run.turing_machine());
 
     left_button.connect_clicked(clone!(gui_state, tm_view => move |_| {
         gui_state.borrow_mut().view_start -= 5;
@@ -165,4 +168,30 @@ fn draw_tape(cr: &cairo::Context, gui_state: &GuiState) {
         * CELL_WIDTH, CELL_HEIGHT/2.0);
     //cr.move_to(15.0, 10.0);
     cr.show_text(&computation.current_state().to_string());
+}
+
+fn show_tm_grid(grid: &gtk::Grid, tm: &TuringMachine) {
+    for n in 0..tm.num_states() {
+        let state = StateID(n as u32);
+        insert_tm_grid_row(grid, (2*n) as i32, state, Symbol::Zero,
+            tm.lookup_action(state, Symbol::Zero));
+        insert_tm_grid_row(grid, (2*n+1) as i32, state, Symbol::One,
+            tm.lookup_action(state, Symbol::One));
+    }
+    grid.queue_draw();
+}
+
+fn insert_tm_grid_row(grid: &gtk::Grid, row: i32, state: StateID, symbol:
+    Symbol, action: Action) {
+
+    use std::ops::Deref;
+
+    grid.insert_row(row);
+
+    let situation_label = gtk::Label::new(format!("{}-{}", state,
+        symbol).deref());
+    let action_label = gtk::Label::new(action.to_string().deref());
+
+    grid.attach(&situation_label, 1, row, 1, 1);
+    grid.attach(&action_label, 2, row, 1, 1);
 }
